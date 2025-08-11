@@ -1,0 +1,17 @@
+ROCM_PATH ?= /opt/rocm
+RCCL_HOME ?= $(ROCM_PATH)/rccl
+
+INC = -D__HIP_PLATFORM_AMD__ -I$(RCCL_HOME)/include -I$(ROCM_PATH)/include
+
+LDFLAGS =
+
+PLUGIN_SO = librccl-tuner.so
+
+all: $(PLUGIN_SO)
+
+$(PLUGIN_SO): tuner.c tuner.h
+	cd -P . ; singularity exec -B $(shell realpath .) /appl/local/containers/sif-images/lumi-pytorch-rocm-6.2.4-python-3.12-pytorch-v2.6.0.sif \
+          $(CC) $(INC) -O3 -ggdb -fPIC -shared -o $@ -Wl,-soname,$(PLUGIN_SO) tuner.c
+
+clean:
+	rm -f $(PLUGIN_SO)
